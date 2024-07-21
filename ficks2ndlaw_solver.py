@@ -1,6 +1,4 @@
-
 import numpy as np
-import matplotlib.pyplot as plt
 from scipy.special import erf
 
 def fick_second_law_2d(D, C0, Cs, t, x, y):
@@ -25,8 +23,8 @@ def convert_units(value, from_unit, to_unit, conversion_factors):
     return value * conversion_factors[from_unit] / conversion_factors[to_unit]
 
 def get_input(prompt, units):
-    value = float(input(f"{prompt} (in {units[0]}): "))
     print(f"Available units: {', '.join(units)}")
+    value = float(input(f"{prompt}: "))
     unit = input(f"Enter the unit you used for {prompt}: ").strip()
     return value, unit
 
@@ -138,29 +136,23 @@ def solve_for_variable(variable, conversion_factors):
         Cs = convert_units(Cs, Cs_unit, 'mol/m^3', conversion_factors)
         t = convert_units(t, t_unit, 'seconds', conversion_factors)
 
-        x_or_y = np.sqrt(4 * D * t * np.log((C0 - Cs) / (C - Cs)))
-        return x_or_y, 'meters'
+        r = 2 * np.sqrt(D * t) * erf((C - Cs) / (C0 - Cs))
+        if variable == 'x':
+            x = np.sqrt(r**2 - y**2)
+            return x, 'meters'
+        else:
+            y = np.sqrt(r**2 - x**2)
+            return y, 'meters'
 
-    else:
-        raise ValueError("Invalid variable to solve for.")
+def main():
+    conversion_factors = {
+        'm^2/s': 1, 'mol/m^3': 1, 'seconds': 1, 'minutes': 60, 'hours': 3600,
+        'meters': 1, 'centimeters': 0.01, 'millimeters': 0.001
+    }
 
-# Conversion factors
-conversion_factors = {
-    'mol/m^3': 1,
-    'm^2/s': 1,
-    'seconds': 1,
-    'minutes': 60,
-    'hours': 3600,
-    'meters': 1,
-    'centimeters': 0.01,
-    'millimeters': 0.001
-}
+    variable = input("Which variable would you like to solve for (D, C, C0, Cs, t, x, y)? ").strip()
+    result, unit = solve_for_variable(variable, conversion_factors)
+    print(f"The value of {variable} is: {result} {unit}")
 
-# Prompt user for variable to solve for
-variable_to_solve = input("Which variable would you like to solve for (D, C, C0, Cs, t, x, y)? ").strip().lower()
-
-# Solve for the chosen variable
-result, unit = solve_for_variable(variable_to_solve, conversion_factors)
-
-# Display the result with appropriate units
-print(f"The value of {variable_to_solve} is: {result} {unit}")
+if __name__ == "__main__":
+    main()
