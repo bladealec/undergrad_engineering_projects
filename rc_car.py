@@ -140,27 +140,29 @@ t_sample = SAMPLE_TIME
 duration = 10
 
 with open("/home/pi/Documents/encoder_data.csv", 'w') as f:
-    text = 'Encoder Data'
-    f.write(f'{text} ,,\n')
-    f.write(f'time,power_l,l_RPM,power_r,r_RPM\n')
-    PWM1.start(0)
-    PWM2.start(0)
+    f.write('Encoder Data,,\n')
+    f.write('time,power_l,l_RPM,power_r,r_RPM\n')
 
-    t = 0  # time
-    t_prev = 0
-    t_start = time.time()
-    t_sample = SAMPLE_TIME
-    f.write(f'{t},{l_RPM},{r_RPM}\n')
+    # Loop through PWM power values
+    for pwm_percent in range(0, 101, 10):
+        PWM1.start(pwm_percent)
+        PWM2.start(pwm_percent)
+        
+        t_start = time.time()
+        t_sample = SAMPLE_TIME
+        t = 0
+        
+        # Reset counts and arrays
+        l_count = r_count = 0
+        l_count_prev = r_count_prev = 0
+        
+        # Run the duration for this PWM setting
+        while t < duration:
+            t = time.time() - t_start
+            CounterFunction()
 
-    # run
-    while t < duration:
-        t = time.time() - t_start
-        CounterFunction()
-
-        if t >= t_sample:
-            t_sample += SAMPLE_TIME
-            RPM_function()
-            PWM1.start(50)
-            PWM2.start(50)
-            print(f'time: {t:.02f} L power: {power_l:.02f} L RPM: {l_RPM:.02f} R pwr: {power_r:.02f} R RPM: {r_RPM:.02f} L Sensor: {l:.02f} R Sensor: {r:.02f}')
-            f.write(f'{t},{power_l},{l_distance},{l_RPM},{power_r},{r_distance},{r_RPM},,{l},{r}\n')
+            if t >= t_sample:
+                t_sample += SAMPLE_TIME
+                RPM_function()
+                print(f'time: {t:.02f} L power: {pwm_percent:.02f} L RPM: {l_RPM:.02f} R power: {pwm_percent:.02f} R RPM: {r_RPM:.02f}')
+                f.write(f'{t},{pwm_percent},{l_RPM},{pwm_percent},{r_RPM}\n')
