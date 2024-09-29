@@ -182,3 +182,6 @@ for power in power_levels:
         plt.legend()
         plt.grid()
         plt.show()
+
+PWM1.stop()
+PWM2.stop()
