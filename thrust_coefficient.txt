@@ -1,0 +1,29 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Function to calculate thrust coefficient
+def calculate_thrust_coefficient(thrust, air_density, rpm, diameter):
+    # Convert rpm to rad/s
+    n = rpm * 2 * np.pi / 60
+    # Calculate thrust coefficient using the formula
+    C_T = thrust / (air_density * n**2 * diameter**4)
+    return C_T
+
+# Given values
+thrust = 10  # Thrust in Newtons
+air_density = 1.225  # Air density in kg/m³ (at sea level)
+diameter = 0.3  # Propeller diameter in meters
+rpm_values = np.linspace(1000, 5000, 100)  # Range of RPM from 1000 to 5000
+
+# Calculate thrust coefficients for each RPM value
+thrust_coefficients = [calculate_thrust_coefficient(thrust, air_density, rpm, diameter) for rpm in rpm_values]
+
+# Plotting
+plt.figure(figsize=(8, 6))
+plt.plot(rpm_values, thrust_coefficients, label='Thrust Coefficient')
+plt.title('Thrust Coefficient vs Rotational Speed (RPM)')
+plt.xlabel('Rotational Speed (RPM)')
+plt.ylabel('Thrust Coefficient (C_T)')
+plt.grid(True)
+plt.legend()
+plt.show()
