@@ -1,7 +1,8 @@
 import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
 
-# Data from Solidworks Flow Simulations
+# Define the data
 data = {
     "AoA": [0, 5, 10, 15, 20],
     "Lift_40": [4.085, 4.138, 4.405, 4.306, 4.116],
@@ -14,32 +15,53 @@ data = {
     "Drag_70": [4.201, 4.247, 4.302, 4.845, 4.925],
 }
 
+# Convert to DataFrame
 df = pd.DataFrame(data)
 
-# Plot Lift Forces
+# Compute Lift-to-Drag ratio (L/D)
+df["L/D_40"] = df["Lift_40"] / df["Drag_40"]
+df["L/D_50"] = df["Lift_50"] / df["Drag_50"]
+df["L/D_60"] = df["Lift_60"] / df["Drag_60"]
+df["L/D_70"] = df["Lift_70"] / df["Drag_70"]
+
+# Find the optimal AoA (max L/D ratio)
+optimal_AoA = {}
+for speed in ["40", "50", "60", "70"]:
+    max_ld_index = df[f"L/D_{speed}"].idxmax()
+    optimal_AoA[speed] = df.loc[max_ld_index, "AoA"]
+
+# Identify potential stall points (drop in L/D)
+stall_points = {}
+for speed in ["40", "50", "60", "70"]:
+    stall_index = np.argmax(np.diff(df[f"L/D_{speed}"]) < 0)  # First drop
+    stall_points[speed] = df.loc[stall_index, "AoA"] if stall_index > 0 else "No Stall Detected"
+
+# Plot Lift-to-Drag ratio
 plt.figure(figsize=(10, 6))
-plt.plot(df["AoA"], df["Lift_40"], label="Lift (40 MPH)", marker="o")
-plt.plot(df["AoA"], df["Lift_50"], label="Lift (50 MPH)", marker="o")
-plt.plot(df["AoA"], df["Lift_60"], label="Lift (60 MPH)", marker="o")
-plt.plot(df["AoA"], df["Lift_70"], label="Lift (70 MPH)", marker="o")
+plt.plot(df["AoA"], df["L/D_40"], label="L/D (40 MPH)", marker="o")
+plt.plot(df["AoA"], df["L/D_50"], label="L/D (50 MPH)", marker="o")
+plt.plot(df["AoA"], df["L/D_60"], label="L/D (60 MPH)", marker="o")
+plt.plot(df["AoA"], df["L/D_70"], label="L/D (70 MPH)", marker="o")
+
+# Mark Optimal AoA
+for speed, aoa in optimal_AoA.items():
+    plt.scatter(aoa, df[f"L/D_{speed}"].max(), label=f"Opt AoA {speed} MPH", marker="x", s=100)
+
+# Mark Stall Points
+for speed, stall_aoa in stall_points.items():
+    if stall_aoa != "No Stall Detected":
+        plt.scatter(stall_aoa, df[df["AoA"] == stall_aoa][f"L/D_{speed}"].values[0], 
+                    label=f"Stall {speed} MPH", marker="s", s=100, color="red")
 
 plt.xlabel("Angle of Attack (AoA) [degrees]")
-plt.ylabel("Lift Force [lbf]")
-plt.title("Lift Forces vs. Angle of Attack")
+plt.ylabel("Lift-to-Drag Ratio (L/D)")
+plt.title("Aerodynamic Efficiency (L/D) vs. Angle of Attack")
 plt.legend()
 plt.grid(True)
 plt.show()
 
-# Plot Drag Forces
-plt.figure(figsize=(10, 6))
-plt.plot(df["AoA"], df["Drag_40"], label="Drag (40 MPH)", marker="s")
-plt.plot(df["AoA"], df["Drag_50"], label="Drag (50 MPH)", marker="s")
-plt.plot(df["AoA"], df["Drag_60"], label="Drag (60 MPH)", marker="s")
-plt.plot(df["AoA"], df["Drag_70"], label="Drag (70 MPH)", marker="s")
-
-plt.xlabel("Angle of Attack (AoA) [degrees]")
-plt.ylabel("Drag Force [lbf]")
-plt.title("Drag Forces vs. Angle of Attack")
-plt.legend()
-plt.grid(True)
-plt.show()
+# Print results
+print("Optimal AoA for Maximum L/D:")
+print(optimal_AoA)
+print("\nPotential Stall AoA:")
+print(stall_points)
