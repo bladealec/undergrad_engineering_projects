@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 
-# Define the data
+# data
 data = {
     "AoA": [0, 5, 10, 15, 20],
     "Lift_40": [4.085, 4.138, 4.405, 4.306, 4.116],
@@ -15,22 +15,21 @@ data = {
     "Drag_70": [4.201, 4.247, 4.302, 4.845, 4.925],
 }
 
-# Convert to DataFrame
 df = pd.DataFrame(data)
 
-# Compute Lift-to-Drag ratio (L/D)
+# Lift-to-Drag ratio (L/D)
 df["L/D_40"] = df["Lift_40"] / df["Drag_40"]
 df["L/D_50"] = df["Lift_50"] / df["Drag_50"]
 df["L/D_60"] = df["Lift_60"] / df["Drag_60"]
 df["L/D_70"] = df["Lift_70"] / df["Drag_70"]
 
-# Find the optimal AoA (max L/D ratio)
+# Optimal AoA (max L/D ratio)
 optimal_AoA = {}
 for speed in ["40", "50", "60", "70"]:
     max_ld_index = df[f"L/D_{speed}"].idxmax()
     optimal_AoA[speed] = df.loc[max_ld_index, "AoA"]
 
-# Identify potential stall points (drop in L/D)
+# potential stall points (drop in L/D)
 stall_points = {}
 for speed in ["40", "50", "60", "70"]:
     stall_index = np.argmax(np.diff(df[f"L/D_{speed}"]) < 0)  # First drop
@@ -55,10 +54,40 @@ for speed, stall_aoa in stall_points.items():
 
 plt.xlabel("Angle of Attack (AoA) [degrees]")
 plt.ylabel("Lift-to-Drag Ratio (L/D)")
-plt.title("Aerodynamic Efficiency (L/D) vs. Angle of Attack")
+plt.title("Lift-to-Drag vs. Angle of Attack")
 plt.legend()
 plt.grid(True)
 plt.show()
+
+# Plot Lift
+plt.figure(figsize=(10, 6))
+plt.plot(df["AoA"], df["Lift_40"], label="Lift(40 MPH)", marker="o")
+plt.plot(df["AoA"], df["Lift_50"], label="Lift (50 MPH)", marker="o")
+plt.plot(df["AoA"], df["Lift_60"], label="Lift (60 MPH)", marker="o")
+plt.plot(df["AoA"], df["Lift_70"], label="Lift (70 MPH)", marker="o")
+
+plt.xlabel("Angle of Attack (AoA) [degrees]")
+plt.ylabel("Lift (L)")
+plt.title("Lift vs. Angle of Attack")
+plt.legend()
+plt.grid(True)
+plt.show()
+
+# Plot Drag
+plt.figure(figsize=(10, 6))
+plt.plot(df["AoA"], df["Drag_40"], label="Lift(40 MPH)", marker="o")
+plt.plot(df["AoA"], df["Drag_50"], label="Lift (50 MPH)", marker="o")
+plt.plot(df["AoA"], df["Drag_60"], label="Lift (60 MPH)", marker="o")
+plt.plot(df["AoA"], df["Drag_70"], label="Lift (70 MPH)", marker="o")
+
+plt.xlabel("Angle of Attack (AoA) [degrees]")
+plt.ylabel("Drag (D)")
+plt.title("Drag vs. Angle of Attack")
+plt.legend()
+plt.grid(True)
+plt.show()
+
+
 
 # Print results
 print("Optimal AoA for Maximum L/D:")
