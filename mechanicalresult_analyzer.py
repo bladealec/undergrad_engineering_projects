@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import stats
 from scipy.optimize import curve_fit
+from scipy.integrate import trapz
 
 # Load data (CSV format with columns: 'Displacement (mm)', 'Load (N)')
 data = pd.read_csv('tensile_test_data.csv')
@@ -22,18 +23,23 @@ def linear_model(x, m, b):
 
 # Fit linear model (elastic region assumption: first 10% of strain)
 fit_range = int(0.1 * len(strain))  # First 10% of strain data
-popt, _ = curve_fit(linear_model, strain[:fit_range], stress[:fit_range])
+popt, pcov = curve_fit(linear_model, strain[:fit_range], stress[:fit_range])
 
 # Modulus of elasticity (slope of the linear region)
 modulus_of_elasticity = popt[0]  # Slope (N/mm²)
 intercept = popt[1]  # Intercept
 
-# Calculate Yield Point based on the linear fit
-yield_strain = strain[0] + (yield_stress - intercept) / modulus_of_elasticity
-yield_stress = modulus_of_elasticity * yield_strain + intercept
+# R-squared value for the linear fit (elastic region)
+residuals = stress[:fit_range] - linear_model(strain[:fit_range], *popt)
+ss_res = np.sum(residuals**2)
+ss_tot = np.sum((stress[:fit_range] - np.mean(stress[:fit_range]))**2)
+r_squared = 1 - (ss_res / ss_tot)
 
-# Plastic Region (After Yield)
-# Find maximum stress and strain values (UTS)
+# Calculate Yield Point based on the linear fit
+yield_stress = modulus_of_elasticity * strain[0] + intercept
+yield_strain = strain[0] + (yield_stress - intercept) / modulus_of_elasticity
+
+# Ultimate Tensile Strength (UTS)
 uts_stress = stress.max()
 uts_strain = strain[stress.idxmax()]
 
@@ -43,21 +49,33 @@ def power_law(x, a, b):
 
 # Fit power-law model to the plastic region (after yield)
 plastic_range = (strain > yield_strain)
-popt_plastic, _ = curve_fit(power_law, strain[plastic_range], stress[plastic_range])
+popt_plastic, pcov_plastic = curve_fit(power_law, strain[plastic_range], stress[plastic_range])
 
 # Strain Hardening Index
 strain_hardening_index = popt_plastic[1]
+
+# R-squared value for the power-law fit (plastic region)
+residuals_plastic = stress[plastic_range] - power_law(strain[plastic_range], *popt_plastic)
+ss_res_plastic = np.sum(residuals_plastic**2)
+ss_tot_plastic = np.sum((stress[plastic_range] - np.mean(stress[plastic_range]))**2)
+r_squared_plastic = 1 - (ss_res_plastic / ss_tot_plastic)
 
 # Determine fracture point (maximum strain) based on the curve shape
 fracture_strain = strain[stress.idxmax()]
 fracture_stress = stress.max()
 
+# Area under the curve (AUC) for total energy absorbed
+auc = trapz(stress, strain)  # Using trapezoidal rule to estimate area
+
 # Print Results
 print(f"Modulus of Elasticity (Elastic Region): {modulus_of_elasticity:.2f} N/mm²")
+print(f"R-squared (Elastic Region Fit): {r_squared:.4f}")
 print(f"Yield Stress: {yield_stress:.2f} N/mm² at Yield Strain: {yield_strain:.4f}")
 print(f"Ultimate Tensile Strength (UTS): {uts_stress:.2f} N/mm² at UTS Strain: {uts_strain:.4f}")
 print(f"Strain Hardening Index: {strain_hardening_index:.4f}")
+print(f"R-squared (Plastic Region Fit): {r_squared_plastic:.4f}")
 print(f"Fracture Stress: {fracture_stress:.2f} N/mm² at Fracture Strain: {fracture_strain:.4f}")
+print(f"Total Energy Absorbed (AUC): {auc:.2f} N·mm (Approximate Energy)")
 
 # Plot Stress-Strain Curve with Linear and Power-Law Fit
 plt.figure(figsize=(10, 8))
