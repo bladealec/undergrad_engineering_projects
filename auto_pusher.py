@@ -1,3 +1,4 @@
+
 import os
 import subprocess
 
@@ -8,9 +9,13 @@ branch_name = "main"  # Or the name of the branch you're working with
 # Navigate to the repository directory
 os.chdir(repo_path)
 
-# Function to commit and push changes to GitHub
-def commit_and_push_to_github():
+# Function to pull the latest changes, commit, and push changes to GitHub
+def pull_commit_and_push_to_github():
     try:
+        # Pull the latest changes from the remote repository before pushing
+        print("Pulling the latest changes from GitHub...")
+        subprocess.run(['git', 'pull', 'origin', branch_name], check=True)
+
         # Check for uncommitted changes
         status = subprocess.check_output(['git', 'status', '--porcelain']).decode('utf-8')
         
@@ -30,5 +35,5 @@ def commit_and_push_to_github():
     except subprocess.CalledProcessError as e:
         print(f"Error during git operation: {e}")
 
-# Call the function to commit and push
-commit_and_push_to_github()
+# Call the function to pull, commit, and push
+pull_commit_and_push_to_github()
